@@ -1,0 +1,19 @@
+[package]
+org = "sahan"
+name = "new_design"
+version = "0.1.0"
+distribution = "2201.3.5-20230426-115000-ffcac3ef"
+
+[build-options]
+observabilityIncluded = true
+
+[persist]
+datastore = "googlesheets"
+module = "new_design"
+
+[[platform.java11.dependency]]
+groupId = "io.ballerina.stdlib"
+artifactId = "persistgooglesheets-native"
+version = "1.0.0-SNAPSHOT"
+path="/Users/sahan/Desktop/Work/persist-new-design/ballerina-persist-googlesheets/native/build/libs/persistgooglesheets-native-1.0.0-SNAPSHOT.jar"
+
