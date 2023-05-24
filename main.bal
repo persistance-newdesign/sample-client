@@ -55,14 +55,6 @@ function checkBuilding(Client rainierClient) returns error? {
     string[] buildingCodes = check rainierClient->/buildings.post([building1]);
     Building buildingRetrieved = check rainierClient->/buildings/[building1.buildingCode].get();
     buildingCodes = check rainierClient->/buildings.post([building2, building3]);
-    // buildingRetrieved = check rainierClient->/buildings/[building2.buildingCode].get();
-    // buildingRetrieved = check rainierClient->/buildings/[building3.buildingCode].get();
-    // buildingRetrieved = check rainierClient->/buildings/[building1.buildingCode].get();
-
-
-    // stream<Building, error?> buildingStream = rainierClient->/buildings.get();
-    // Building[] buildings = check from Building building_temp in buildingStream
-    //     select building_temp;
 
     Building buildingUpdated = check rainierClient->/buildings/[building1.buildingCode].put({
         city: "Galle",
@@ -80,9 +72,6 @@ function checkBuilding(Client rainierClient) returns error? {
     if buildingRetrievedError !is error {
         panic error("Error expected");
     }
-    // stream<Building, error?> buildingStream2 = rainierClient->/buildings.get();
-    // Building[] buildingSet = check from Building building_temp2 in buildingStream2
-    //     select building_temp2;
     Building buildingDeleted = check rainierClient->/buildings/[building1.buildingCode].delete();
 
     io:println("Building examples successfully executed!");
@@ -182,30 +171,19 @@ function checkWorkspace(Client rainierClient) returns error? {
     };
 
     string[] workspaceIds = check rainierClient->/workspaces.post([workspace1]);
-    // Workspace workspaceRetrieved = check rainierClient->/workspaces/[workspace1.workspaceId].get();
     workspaceIds = check rainierClient->/workspaces.post([workspace2, workspace3]);
-    // Workspace workspaceRetrieved = check rainierClient->/workspaces/[workspace2.workspaceId].get();
-    // workspaceRetrieved = check rainierClient->/workspaces/[workspace3.workspaceId].get();
-    // workspaceRetrieved = check rainierClient->/workspaces/[workspace1.workspaceId].get();
     Workspace|error workspaceError = rainierClient->/workspaces/["invalid-workspace-id"].get();
     if workspaceError !is error {
         panic error("Error expected");
     }
-    // stream<Workspace, error?> workspaceStream = rainierClient->/workspaces.get();
-    // Workspace[] workspaces = check from Workspace workspace_temp in workspaceStream
-    //     select workspace_temp;
     Workspace workspaceUpdated = check rainierClient->/workspaces/[workspace1.workspaceId].put({
         workspaceType: "large"
     });
-    //workspaceRetrieved = check rainierClient->/workspaces/[workspace1.workspaceId].get();
 
     workspaceError = rainierClient->/workspaces/["invalid-workspace-id"].put({
         workspaceType: "large"
     });
 
-    // stream<Workspace, error?> workspaceStream2 = rainierClient->/workspaces.get();
-    // workspaces = check from Workspace workspace_temp2 in workspaceStream2
-    //     select workspace_temp2;
     Workspace workspaceDeleted = check rainierClient->/workspaces/[workspace1.workspaceId].delete();
 
     workspaceIds = check rainierClient->/workspaces.post([workspace1]);
@@ -274,14 +252,7 @@ function checkEmployee(Client rainierClient) returns error? {
 
 
     empNos = check rainierClient->/employees.post([employee2, employee3]);
-    // employeeRetrieved = check rainierClient->/employees/[employee2.empNo].get();
-
-    // employeeRetrieved = check rainierClient->/employees/[employee3.empNo].get();
-    // employeeRetrieved = check rainierClient->/employees/[employee1.empNo].get();
     Employee|error employeeError = rainierClient->/employees/["invalid-employee-id"].get();
-    // stream<Employee, error?> employeeStream = rainierClient->/employees.get();
-    // Employee[] employees = check from Employee employee in employeeStream
-    //     select employee;
 
     Employee employeeUpdated = check rainierClient->/employees/[employee1.empNo].put({
         lastName: "Jones",
@@ -291,14 +262,6 @@ function checkEmployee(Client rainierClient) returns error? {
     employeeError = rainierClient->/employees/["invalid-employee-id"].put({
         lastName: "Jones"
     });
-
-    // employeeError = rainierClient->/employees/[employee1.empNo].put({
-    //     workspaceWorkspaceId: "invalid-workspaceWorkspaceId"
-    // });
-
-    // stream<Employee, error?> employeeStream2 = rainierClient->/employees.get();
-    // employees = check from Employee employee_temp2 in employeeStream2
-    //     select employee_temp2;
 
     Employee employeeDeleted = check rainierClient->/employees/[employee1.empNo].delete();
     io:println("Employee examples successfully executed!");
@@ -430,17 +393,4 @@ public function main() returns error? {
     BuildingWithRelations[] buildings = check from BuildingWithRelations building in buildingsStream
         select building;
     io:println(buildings);
-
-    // OrderItem|error orderItem = rainierClient->/orderitems/[orderItem1.orderId]/[orderItem2.itemId].put({
-    //     quantity: 239,
-    //     notes: "updated notes"
-    // });
-
-    // if orderItem is error {
-    //     io:println(orderItem);
-    // } 
-    // OrderItem|error orderItem = rainierClient->/orderitems/["invalid-order-id"]/[orderItem2.itemId].delete();
-    // if orderItem is error {
-    //     io:println(orderItem);
-    // } 
 }

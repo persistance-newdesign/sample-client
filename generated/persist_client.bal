@@ -7,7 +7,7 @@ import ballerina/persist;
 import ballerina/jballerina.java;
 import ballerinax/googleapis.sheets;
 import ballerina/http;
-import ballerina/persistgooglesheets as gpersist;
+import ballerina/persist.googlesheets as psheets;
 
 const EMPLOYEE = "employees";
 const WORKSPACE = "workspaces";
@@ -22,10 +22,10 @@ public isolated client class Client {
 
     private final http:Client httpClient;
 
-    private final map<gpersist:GoogleSheetsClient> persistClients;
+    private final map<psheets:GoogleSheetsClient> persistClients;
 
     public isolated function init() returns persist:Error? {
-        final record {|gpersist:SheetMetadata...;|} & readonly metadata = {
+        final record {|psheets:SheetMetadata...;|} & readonly metadata = {
             [EMPLOYEE] : {
                 entityName: "Employee",
                 tableName: "Employee",
@@ -168,7 +168,7 @@ public isolated client class Client {
         }
         self.googleSheetClient = googleSheetClient;
         self.httpClient = httpClient;
-        map<int> sheetIds = check gpersist:getSheetIds(self.googleSheetClient, metadata, spreadsheetId);
+        map<int> sheetIds = check psheets:getSheetIds(self.googleSheetClient, metadata, spreadsheetId);
         self.persistClients = {
             [EMPLOYEE] : check new (self.googleSheetClient, self.httpClient, metadata.get(EMPLOYEE).cloneReadOnly(), spreadsheetId.cloneReadOnly(), sheetIds.get(EMPLOYEE).cloneReadOnly()),
             [WORKSPACE] : check new (self.googleSheetClient, self.httpClient, metadata.get(WORKSPACE).cloneReadOnly(), spreadsheetId.cloneReadOnly(), sheetIds.get(WORKSPACE).cloneReadOnly()),
@@ -189,7 +189,7 @@ public isolated client class Client {
     } external;
 
     isolated resource function post employees(EmployeeInsert[] data) returns string[]|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(EMPLOYEE);
         }
@@ -199,7 +199,7 @@ public isolated client class Client {
     }
 
     isolated resource function put employees/[string empNo](EmployeeUpdate value) returns Employee|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(EMPLOYEE);
         }
@@ -209,7 +209,7 @@ public isolated client class Client {
 
     isolated resource function delete employees/[string empNo]() returns Employee|persist:Error {
         Employee result = check self->/employees/[empNo].get();
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(EMPLOYEE);
         }
@@ -224,7 +224,7 @@ public isolated client class Client {
         record {}[] outputArray = check from record {} 'object in employeesStream
             outer join var department in departmentsStream on ['object.departmentDeptNo] equals [department?.deptNo]
             outer join var workspace in workspacesStream on ['object.workspaceWorkspaceId] equals [workspace?.workspaceId]
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object,
                 "department": department,
                 "workspace": workspace
@@ -237,7 +237,7 @@ public isolated client class Client {
         stream<Department, persist:Error?> departmentsStream = self.queryDepartmentsStream();
         stream<Workspace, persist:Error?> workspacesStream = self.queryWorkspacesStream();
         error? unionResult = from record {} 'object in employeesStream
-            where gpersist:getKey('object, ["empNo"]) == key
+            where psheets:getKey('object, ["empNo"]) == key
             outer join var department in departmentsStream on ['object.departmentDeptNo] equals [department?.deptNo]
             outer join var workspace in workspacesStream on ['object.workspaceWorkspaceId] equals [workspace?.workspaceId]
             do {
@@ -269,7 +269,7 @@ public isolated client class Client {
     } external;
 
     isolated resource function post workspaces(WorkspaceInsert[] data) returns string[]|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(WORKSPACE);
         }
@@ -279,7 +279,7 @@ public isolated client class Client {
     }
 
     isolated resource function put workspaces/[string workspaceId](WorkspaceUpdate value) returns Workspace|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(WORKSPACE);
         }
@@ -289,7 +289,7 @@ public isolated client class Client {
 
     isolated resource function delete workspaces/[string workspaceId]() returns Workspace|persist:Error {
         Workspace result = check self->/workspaces/[workspaceId].get();
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(WORKSPACE);
         }
@@ -302,7 +302,7 @@ public isolated client class Client {
         stream<Building, persist:Error?> buildingsStream = self.queryBuildingsStream();
         record {}[] outputArray = check from record {} 'object in workspacesStream
             outer join var location in buildingsStream on ['object.locationBuildingCode] equals [location?.buildingCode]
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object,
                 "location": location
             }, fields);
@@ -313,7 +313,7 @@ public isolated client class Client {
         stream<Workspace, persist:Error?> workspacesStream = self.queryWorkspacesStream();
         stream<Building, persist:Error?> buildingsStream = self.queryBuildingsStream();
         error? unionResult = from record {} 'object in workspacesStream
-            where gpersist:getKey('object, ["workspaceId"]) == key
+            where psheets:getKey('object, ["workspaceId"]) == key
             outer join var location in buildingsStream on ['object.locationBuildingCode] equals [location?.buildingCode]
             do {
                 return {
@@ -343,7 +343,7 @@ public isolated client class Client {
     } external;
 
     isolated resource function post buildings(BuildingInsert[] data) returns string[]|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(BUILDING);
         }
@@ -353,7 +353,7 @@ public isolated client class Client {
     }
 
     isolated resource function put buildings/[string buildingCode](BuildingUpdate value) returns Building|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(BUILDING);
         }
@@ -363,7 +363,7 @@ public isolated client class Client {
 
     isolated resource function delete buildings/[string buildingCode]() returns Building|persist:Error {
         Building result = check self->/buildings/[buildingCode].get();
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(BUILDING);
         }
@@ -374,7 +374,7 @@ public isolated client class Client {
     private isolated function queryBuildings(string[] fields) returns stream<record {}, persist:Error?>|persist:Error {
         stream<Building, persist:Error?> buildingsStream = self.queryBuildingsStream();
         record {}[] outputArray = check from record {} 'object in buildingsStream
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object
             }, fields);
         return outputArray.toStream();
@@ -383,7 +383,7 @@ public isolated client class Client {
     private isolated function queryOneBuildings(anydata key) returns record {}|persist:NotFoundError {
         stream<Building, persist:Error?> buildingsStream = self.queryBuildingsStream();
         error? unionResult = from record {} 'object in buildingsStream
-            where gpersist:getKey('object, ["buildingCode"]) == key
+            where psheets:getKey('object, ["buildingCode"]) == key
             do {
                 return {
                     ...'object
@@ -411,7 +411,7 @@ public isolated client class Client {
     } external;
 
     isolated resource function post departments(DepartmentInsert[] data) returns string[]|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(DEPARTMENT);
         }
@@ -421,7 +421,7 @@ public isolated client class Client {
     }
 
     isolated resource function put departments/[string deptNo](DepartmentUpdate value) returns Department|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(DEPARTMENT);
         }
@@ -431,7 +431,7 @@ public isolated client class Client {
 
     isolated resource function delete departments/[string deptNo]() returns Department|persist:Error {
         Department result = check self->/departments/[deptNo].get();
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(DEPARTMENT);
         }
@@ -442,7 +442,7 @@ public isolated client class Client {
     private isolated function queryDepartments(string[] fields) returns stream<record {}, persist:Error?>|persist:Error {
         stream<Department, persist:Error?> departmentsStream = self.queryDepartmentsStream();
         record {}[] outputArray = check from record {} 'object in departmentsStream
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object
             }, fields);
         return outputArray.toStream();
@@ -451,7 +451,7 @@ public isolated client class Client {
     private isolated function queryOneDepartments(anydata key) returns record {}|persist:NotFoundError {
         stream<Department, persist:Error?> departmentsStream = self.queryDepartmentsStream();
         error? unionResult = from record {} 'object in departmentsStream
-            where gpersist:getKey('object, ["deptNo"]) == key
+            where psheets:getKey('object, ["deptNo"]) == key
             do {
                 return {
                     ...'object
@@ -479,7 +479,7 @@ public isolated client class Client {
     } external;
 
     isolated resource function post orderitems(OrderItemInsert[] data) returns [string, string][]|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(ORDER_ITEM);
         }
@@ -489,7 +489,7 @@ public isolated client class Client {
     }
 
     isolated resource function put orderitems/[string orderId]/[string itemId](OrderItemUpdate value) returns OrderItem|persist:Error {
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(ORDER_ITEM);
         }
@@ -499,7 +499,7 @@ public isolated client class Client {
 
     isolated resource function delete orderitems/[string orderId]/[string itemId]() returns OrderItem|persist:Error {
         OrderItem result = check self->/orderitems/[orderId]/[itemId].get();
-        gpersist:GoogleSheetsClient googleSheetsClient;
+        psheets:GoogleSheetsClient googleSheetsClient;
         lock {
             googleSheetsClient = self.persistClients.get(ORDER_ITEM);
         }
@@ -510,7 +510,7 @@ public isolated client class Client {
     private isolated function queryOrderitems(string[] fields) returns stream<record {}, persist:Error?>|persist:Error {
         stream<OrderItem, persist:Error?> orderitemsStream = self.queryOrderitemsStream();
         record {}[] outputArray = check from record {} 'object in orderitemsStream
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object
             }, fields);
         return outputArray.toStream();
@@ -519,7 +519,7 @@ public isolated client class Client {
     private isolated function queryOneOrderitems(anydata key) returns record {}|persist:NotFoundError {
         stream<OrderItem, persist:Error?> orderitemsStream = self.queryOrderitemsStream();
         error? unionResult = from record {} 'object in orderitemsStream
-            where gpersist:getKey('object, ["orderId", "itemId"]) == key
+            where psheets:getKey('object, ["orderId", "itemId"]) == key
             do {
                 return {
                     ...'object
@@ -540,7 +540,7 @@ public isolated client class Client {
         stream<Workspace, persist:Error?> workspacesStream = self.queryWorkspacesStream();
         return from record {} 'object in workspacesStream
             where 'object.locationBuildingCode == value["buildingCode"]
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object
             }, fields);
     }
@@ -549,7 +549,7 @@ public isolated client class Client {
         stream<Employee, persist:Error?> employeesStream = self.queryEmployeesStream();
         return from record {} 'object in employeesStream
             where 'object.departmentDeptNo == value["deptNo"]
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object
             }, fields);
     }
@@ -558,7 +558,7 @@ public isolated client class Client {
         stream<Employee, persist:Error?> employeesStream = self.queryEmployeesStream();
         return from record {} 'object in employeesStream
             where 'object.workspaceWorkspaceId == value["workspaceId"]
-            select gpersist:filterRecord({
+            select psheets:filterRecord({
                 ...'object
             }, fields);
     }
